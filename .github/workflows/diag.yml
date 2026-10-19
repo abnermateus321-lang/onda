@@ -1,10 +1,16 @@
 name: diag
-on: push
+on:
+  push:
+    paths: ['.github/workflows/diag.yml']
+permissions:
+  contents: write
 jobs:
   t:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - run: |
+          exec > result.txt 2>&1
           O="Origin: https://abnermateus321-lang.github.io"
           for u in \
             "https://api.audius.co/v1/tracks/search?query=anitta&app_name=Onda" \
@@ -20,3 +26,6 @@ jobs:
           echo "==== stream redirect"
           ID=$(curl -s "https://api.audius.co/v1/tracks/trending?app_name=Onda&limit=1" | python3 -c "import sys,json;print(json.load(sys.stdin)['data'][0]['id'])")
           curl -sS -m 20 -D - -o /dev/null -H "$O" "https://api.audius.co/v1/tracks/$ID/stream?app_name=Onda" | grep -iE "^HTTP|location|access-control|content-type"
+      - run: |
+          git config user.name bot; git config user.email bot@users.noreply.github.com
+          git add result.txt; git commit -m "diag result"; git push
