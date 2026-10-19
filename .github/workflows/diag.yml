@@ -10,18 +10,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: |
+          set +e
           exec > result.txt 2>&1
           O="Origin: https://abnermateus321-lang.github.io"
           echo "== apple rss"; curl -sS -m 20 -D - -H "$O" "https://rss.applemarketingtools.com/api/v2/br/music/most-played/10/songs.json" -o b.txt | grep -iE "^HTTP|access-control"; head -c 900 b.txt; echo
-          echo "== audius fields"; curl -s "https://api.audius.co/v1/tracks/search?query=lofi&app_name=Onda&limit=3" | python3 -c "
-          import sys,json
-          d=json.load(sys.stdin)['data']
-          for t in d: print({k:t.get(k) for k in ['id','title','is_streamable','stream_conditions','is_stream_gated','artwork','duration']}, t['user']['name'])
-          print(sorted(d[0].keys()))"
-          echo "== audius search params"; curl -s "https://api.audius.co/v1/tracks/search?query=lofi&app_name=Onda&limit=2&sort_method=popular" | head -c 200; echo
-          echo "== itunes fields"; curl -s "https://itunes.apple.com/search?term=jorge%20e%20mateus&media=music&entity=song&limit=1&country=BR" | python3 -c "import sys,json;print(json.load(sys.stdin)['results'][0])"
+          printf '%s\n' 'import sys,json' 'd=json.load(sys.stdin)["data"]' 'for t in d: print({k:t.get(k) for k in ["id","title","is_streamable","stream_conditions","is_stream_gated","artwork","duration"]}, t["user"]["name"])' 'print(sorted(d[0].keys()))' > a.py
+          echo "== audius fields"; curl -s "https://api.audius.co/v1/tracks/search?query=lofi&app_name=Onda&limit=3" | python3 a.py
+          echo "== itunes"; curl -s "https://itunes.apple.com/search?term=jorge%20e%20mateus&media=music&entity=song&limit=1&country=BR" | python3 -c "import sys,json;print(json.load(sys.stdin)['results'][0])"
           echo "== deezer jsonp"; curl -s "https://api.deezer.com/search?q=anitta&limit=1&output=jsonp&callback=cb" | head -c 150; echo
-          echo "== deezer chart"; curl -sS -D - -H "$O" "https://api.deezer.com/chart/0/tracks?limit=1" -o c.txt | grep -i access-control-allow-origin; head -c 100 c.txt; echo
+          echo "== deezer chart cors"; curl -sS -D - -H "$O" "https://api.deezer.com/chart/0/tracks?limit=1" -o c.txt | grep -i access-control-allow-origin; head -c 100 c.txt; echo
+          true
       - run: |
           git config user.name bot; git config user.email bot@users.noreply.github.com
-          git add result.txt; git commit -m "diag result"; git push
+          git add result.txt; git commit -m "diag result 2"; git push
