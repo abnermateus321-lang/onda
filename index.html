@@ -4,426 +4,90 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#000000">
+<meta name="description" content="Música e rádio grátis, sem anúncio. Toca com a tela apagada.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Onda">
 <title>Onda</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600&display=swap">
-<style>
-/* Layout: OLED preto, uma coluna; abas no topo, lista no meio, player fixo embaixo */
-:root {
-  color-scheme: dark;
-  --bg: #000000;
-  --surface: #0f0d0b;
-  --surface-2: #1b1814;
-  --line: #2a2520;
-  --fg: #f5efe6;
-  --muted: #a39a8e;
-  --accent: #ffb547;
-  --on-accent: #1a1206;
-  --danger: #ff7a6b;
-  --font-display: "Bricolage Grotesque", "Trebuchet MS", system-ui, sans-serif;
-  --font-body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --radius: 14px;
-  --player-h: 132px;
-}
-* { box-sizing: border-box; }
-html, body { height: 100%; }
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--fg);
-  font: 16px/1.5 var(--font-body);
-  -webkit-tap-highlight-color: transparent;
-}
-button, input { font: inherit; color: inherit; }
-button { cursor: pointer; }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.app {
-  max-width: 640px;
-  margin: 0 auto;
-  padding-top: max(12px, env(safe-area-inset-top, 0px));
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
-  padding-bottom: calc(var(--player-h) + env(safe-area-inset-bottom, 0px) + 16px);
-  display: flex; flex-direction: column; gap: 16px;
-}
-header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
-h1 {
-  margin: 0; font-family: var(--font-display); font-weight: 800;
-  font-size: 2rem; letter-spacing: -0.02em;
-}
-h1 span { color: var(--accent); }
-.tagline { color: var(--muted); font-size: 0.875rem; }
-.tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; background: var(--surface); padding: 4px; border-radius: 999px; }
-.tab {
-  min-height: 44px; border: 0; border-radius: 999px; background: transparent;
-  color: var(--muted); font-weight: 600; transition: background .2s, color .2s;
-}
-.tab[aria-selected="true"] { background: var(--surface-2); color: var(--fg); }
-form.search { display: flex; gap: 8px; }
-.search label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-.search input {
-  flex: 1; min-width: 0; min-height: 48px; padding: 0 16px;
-  background: var(--surface); border: 1px solid var(--line); border-radius: 999px;
-}
-.search input::placeholder { color: var(--muted); }
-.btn-accent {
-  min-height: 48px; padding: 0 20px; border: 0; border-radius: 999px;
-  background: var(--accent); color: var(--on-accent); font-weight: 600;
-}
-.section-title { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 1.125rem; }
-.status { color: var(--muted); font-size: 0.9375rem; margin: 0; }
-.status.error { color: var(--danger); }
-.status:empty { display: none; }
-ul.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
-.row {
-  display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px;
-  padding: 8px; border-radius: var(--radius); transition: background .15s;
-}
-.row:hover { background: var(--surface); }
-.row.playing { background: var(--surface-2); }
-.row.playing .title { color: var(--accent); }
-.row-main { display: grid; grid-template-columns: 52px 1fr; gap: 12px; align-items: center; min-width: 0; padding: 0; border: 0; background: none; text-align: left; border-radius: 10px; }
-.cover {
-  width: 52px; height: 52px; border-radius: 10px; object-fit: cover;
-  background: var(--surface-2); display: grid; place-items: center; color: var(--muted);
-}
-.meta { min-width: 0; }
-.title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.sub { color: var(--muted); font-size: 0.875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.icon-btn {
-  width: 44px; height: 44px; border: 0; border-radius: 999px; background: transparent;
-  display: grid; place-items: center; color: var(--muted);
-}
-.icon-btn:hover { color: var(--fg); background: var(--surface-2); }
-.icon-btn.on { color: var(--accent); }
-svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.tip {
-  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
-  padding: 12px 14px; font-size: 0.875rem; color: var(--muted);
-}
-.tip strong { color: var(--fg); }
-
-/* Player */
-.player {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
-  background: var(--surface); border-top: 1px solid var(--line);
-  padding-top: 10px;
-  padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
-}
-.player-inner { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 6px; }
-.now { display: grid; grid-template-columns: 48px 1fr auto; gap: 12px; align-items: center; }
-.now .cover { width: 48px; height: 48px; }
-.controls { display: flex; align-items: center; gap: 4px; }
-.play {
-  width: 52px; height: 52px; border: 0; border-radius: 999px;
-  background: var(--accent); color: var(--on-accent); display: grid; place-items: center;
-}
-.play svg { width: 24px; height: 24px; }
-.play svg.fill { fill: currentColor; stroke: none; }
-.bar { display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; gap: 8px; font-size: 0.75rem; color: var(--muted); font-variant-numeric: tabular-nums; }
-.bar span:last-child { text-align: right; }
-input[type="range"] { width: 100%; accent-color: var(--accent); height: 28px; margin: 0; }
-.live { color: var(--accent); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.75rem; }
-@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
-</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="app.css">
 </head>
 <body>
-<main class="app">
-  <header>
-    <h1>On<span>da</span></h1>
-    <span class="tagline">Sem anúncio. Toca com a tela apagada.</span>
-  </header>
+<div id="app">
+  <main id="view" tabindex="-1"></main>
 
-  <div class="tabs" role="tablist" aria-label="Seções">
-    <button class="tab" role="tab" id="tab-musicas" aria-selected="true" data-tab="musicas">Músicas</button>
-    <button class="tab" role="tab" id="tab-radios" aria-selected="false" data-tab="radios">Rádios</button>
-    <button class="tab" role="tab" id="tab-favoritos" aria-selected="false" data-tab="favoritos">Favoritos</button>
+  <div id="mini" class="mini" hidden>
+    <button class="mini-open" id="mini-open" aria-label="Abrir player">
+      <img class="mini-art" id="mini-art" alt="">
+      <span class="mini-meta">
+        <span class="mini-title" id="mini-title"></span>
+        <span class="mini-sub" id="mini-sub"></span>
+      </span>
+    </button>
+    <button class="icon-btn" id="mini-fav" aria-label="Favoritar"></button>
+    <button class="icon-btn mini-play" id="mini-play" aria-label="Tocar"></button>
+    <div class="mini-progress"><div id="mini-bar"></div></div>
   </div>
 
-  <form class="search" id="search-form" role="search">
-    <label for="q">Buscar</label>
-    <input id="q" type="search" autocomplete="off" enterkeyhint="search" placeholder="Artista, música ou gênero">
-    <button class="btn-accent" type="submit">Buscar</button>
-  </form>
+  <nav class="tabbar" aria-label="Navegação">
+    <button data-nav="home"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg><span>Início</span></button>
+    <button data-nav="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span>Buscar</span></button>
+    <button data-nav="radio"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8a6 6 0 0 1 0 8.4M7.8 16.2a6 6 0 0 1 0-8.4M19.1 4.9a10 10 0 0 1 0 14.2M4.9 19.1a10 10 0 0 1 0-14.2"/></svg><span>Rádios</span></button>
+    <button data-nav="library"><svg viewBox="0 0 24 24"><path d="M4 4v16M9 4v16M14 4l6 16"/></svg><span>Biblioteca</span></button>
+  </nav>
 
-  <h2 class="section-title" id="list-title">Em alta agora</h2>
-  <p class="status" id="status" role="status" aria-live="polite"></p>
-  <ul class="list" id="list"></ul>
-
-  <div class="tip" id="tip">
-    <strong>Para tocar com a tela desligada:</strong> dê play, depois bloqueie o celular.
-    Os controles aparecem na tela de bloqueio. No iPhone, abra pelo Safari.
-  </div>
-</main>
-
-<div class="player" aria-label="Player">
-  <div class="player-inner">
-    <div class="now">
-      <div class="cover" id="now-cover" aria-hidden="true">
-        <svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+  <section id="full" class="full" hidden aria-label="Tocando agora">
+    <div class="full-bg" id="full-bg"></div>
+    <div class="full-inner">
+      <header class="full-head">
+        <button class="icon-btn" id="full-close" aria-label="Fechar player"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
+        <span class="full-context" id="full-context">Tocando agora</span>
+        <button class="icon-btn" id="full-queue" aria-label="Ver fila"><svg viewBox="0 0 24 24"><path d="M3 6h13M3 12h13M3 18h9M19 14v7"/></svg></button>
+      </header>
+      <div class="full-art-wrap"><img class="full-art" id="full-art" alt=""></div>
+      <div class="full-row">
+        <div class="full-meta">
+          <h2 id="full-title"></h2>
+          <button class="link-btn" id="full-artist"></button>
+        </div>
+        <button class="icon-btn big" id="full-fav" aria-label="Favoritar"></button>
       </div>
-      <div class="meta">
-        <div class="title" id="now-title">Nada tocando</div>
-        <div class="sub" id="now-sub">Escolha uma música ou rádio</div>
+      <div class="badge-row" id="full-badges"></div>
+      <div class="seek" id="full-seek-wrap">
+        <input type="range" id="full-seek" min="0" max="0" step="0.1" value="0" aria-label="Posição na música">
+        <div class="times"><span id="full-cur">0:00</span><span id="full-dur">0:00</span></div>
       </div>
-      <div class="controls">
-        <button class="icon-btn" id="prev" aria-label="Anterior">
-          <svg viewBox="0 0 24 24"><path d="M19 20 9 12l10-8v16Z"/><path d="M5 19V5"/></svg>
-        </button>
-        <button class="play" id="play" aria-label="Tocar">
-          <svg viewBox="0 0 24 24" class="fill" id="play-icon"><path d="M7 4v16l13-8z"/></svg>
-        </button>
-        <button class="icon-btn" id="next" aria-label="Próxima">
-          <svg viewBox="0 0 24 24"><path d="m5 4 10 8-10 8V4Z"/><path d="M19 5v14"/></svg>
-        </button>
+      <div class="transport">
+        <button class="icon-btn" id="btn-shuffle" aria-label="Aleatório" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg></button>
+        <button class="icon-btn big" id="btn-prev" aria-label="Anterior"><svg viewBox="0 0 24 24" class="fill"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></button>
+        <button class="play-big" id="btn-play" aria-label="Tocar"></button>
+        <button class="icon-btn big" id="btn-next" aria-label="Próxima"><svg viewBox="0 0 24 24" class="fill"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg></button>
+        <button class="icon-btn" id="btn-repeat" aria-label="Repetir"></button>
+      </div>
+      <div class="full-tools">
+        <button class="chip" id="btn-timer"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/></svg><span id="timer-label">Timer</span></button>
+        <button class="chip" id="btn-outside"><svg viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg><span>Ouvir completa</span></button>
       </div>
     </div>
-    <div class="bar" id="bar">
-      <span id="cur">0:00</span>
-      <input type="range" id="seek" min="0" max="0" step="1" value="0" aria-label="Posição">
-      <span id="dur">0:00</span>
-    </div>
-  </div>
+  </section>
+
+  <div id="sheet-backdrop" class="sheet-backdrop" hidden></div>
+  <section id="sheet" class="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+    <div class="sheet-grip"></div>
+    <h3 id="sheet-title"></h3>
+    <div id="sheet-body"></div>
+  </section>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 </div>
 
-<audio id="audio" preload="none" playsinline></audio>
-
-<script>
-(() => {
-  const APP = "Onda";
-  const AUDIUS = "https://api.audius.co/v1";
-  const RADIO_HOSTS = ["de1.api.radio-browser.info", "de2.api.radio-browser.info", "fi1.api.radio-browser.info"];
-
-  const $ = (id) => document.getElementById(id);
-  const audio = $("audio");
-  const list = $("list");
-  const status = $("status");
-  let tab = "musicas";
-  let results = [];
-  let queue = [];
-  let index = -1;
-
-  const store = {
-    get(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } },
-    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
-  };
-  let favs = store.get("onda-favs", []);
-
-  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  const fmt = (s) => { if (!isFinite(s)) return "0:00"; s = Math.floor(s); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
-
-  async function getJSON(url, ms = 12000) {
-    const ctl = new AbortController();
-    const t = setTimeout(() => ctl.abort(), ms);
-    try {
-      const r = await fetch(url, { signal: ctl.signal });
-      if (!r.ok) throw new Error("HTTP " + r.status);
-      return await r.json();
-    } finally { clearTimeout(t); }
-  }
-
-  // Audius: catálogo aberto de músicas, streaming gratuito e legal
-  const mapTrack = (t) => ({
-    kind: "track",
-    id: "a:" + t.id,
-    title: t.title,
-    sub: t.user?.name || "Artista independente",
-    art: t.artwork?.["480x480"] || t.artwork?.["150x150"] || "",
-    src: `${AUDIUS}/tracks/${encodeURIComponent(t.id)}/stream?app_name=${APP}`,
-    duration: t.duration,
-  });
-  const audiusTrending = () => getJSON(`${AUDIUS}/tracks/trending?app_name=${APP}&limit=40`).then((j) => (j.data || []).map(mapTrack));
-  const audiusSearch = (q) => getJSON(`${AUDIUS}/tracks/search?query=${encodeURIComponent(q)}&app_name=${APP}`).then((j) => (j.data || []).map(mapTrack));
-
-  // Radio Browser: dezenas de milhares de rádios ao vivo do mundo todo
-  const canHls = !!audio.canPlayType("application/vnd.apple.mpegurl");
-  const needHttps = location.protocol === "https:";
-  const mapStation = (s) => ({
-    kind: "radio",
-    id: "r:" + s.stationuuid,
-    title: s.name.trim(),
-    sub: [s.country, (s.tags || "").split(",").slice(0, 2).join(", ")].filter(Boolean).join(" · "),
-    art: s.favicon || "",
-    src: s.url_resolved || s.url,
-    hls: s.hls === 1 || /\.m3u8/i.test(s.url_resolved || ""),
-  });
-  async function radioQuery(params) {
-    const qs = new URLSearchParams({ hidebroken: "true", limit: "60", order: "clickcount", reverse: "true", ...params });
-    let lastErr;
-    for (const h of RADIO_HOSTS) {
-      try {
-        const data = await getJSON(`https://${h}/json/stations/search?${qs}`);
-        return data.map(mapStation).filter((s) => s.src && (!needHttps || s.src.startsWith("https:")) && (!s.hls || canHls));
-      } catch (e) { lastErr = e; }
-    }
-    throw lastErr;
-  }
-
-  const icon = {
-    heart: '<svg viewBox="0 0 24 24"><path d="M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2-1.5-1.5-2.7-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4 3 5.5l7 7Z"/></svg>',
-    note: '<svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>',
-    radio: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8a6 6 0 0 1 0 8.4M7.8 16.2a6 6 0 0 1 0-8.4M19.1 4.9a10 10 0 0 1 0 14.2M4.9 19.1a10 10 0 0 1 0-14.2"/></svg>',
-    play: '<path d="M7 4v16l13-8z"/>',
-    pause: '<path d="M6 4h4v16H6zM14 4h4v16h-4z"/>',
-  };
-
-  function coverHTML(item) {
-    const fallback = item.kind === "radio" ? icon.radio : icon.note;
-    if (!item.art) return `<div class="cover" aria-hidden="true">${fallback}</div>`;
-    return `<img class="cover" alt="" loading="lazy" referrerpolicy="no-referrer" src="${esc(item.art)}" onerror="this.outerHTML='<div class=&quot;cover&quot; aria-hidden=&quot;true&quot;>${fallback.replace(/"/g, "&quot;")}</div>'">`;
-  }
-
-  function render() {
-    const current = queue[index]?.id;
-    list.innerHTML = results.map((it, i) => {
-      const fav = favs.some((f) => f.id === it.id);
-      const extra = it.kind === "radio" ? '<span class="live">ao vivo</span>' : fmt(it.duration);
-      return `<li class="row${it.id === current ? " playing" : ""}">
-        <button class="row-main" data-i="${i}" aria-label="Tocar ${esc(it.title)}">
-          ${coverHTML(it)}
-          <span class="meta"><span class="title" style="display:block">${esc(it.title)}</span><span class="sub" style="display:block">${esc(it.sub)} · ${extra}</span></span>
-        </button>
-        <button class="icon-btn${fav ? " on" : ""}" data-fav="${i}" aria-pressed="${fav}" aria-label="${fav ? "Tirar dos" : "Adicionar aos"} favoritos">${icon.heart}</button>
-      </li>`;
-    }).join("");
-  }
-
-  function setStatus(msg, isError) { status.textContent = msg || ""; status.classList.toggle("error", !!isError); }
-
-  async function load(fn, title) {
-    $("list-title").textContent = title;
-    setStatus("Carregando…");
-    results = []; render();
-    try {
-      results = await fn();
-      setStatus(results.length ? "" : "Nada encontrado. Tente outro nome.");
-    } catch (e) {
-      setStatus("Não consegui carregar. Confira a internet e tente de novo.", true);
-    }
-    render();
-  }
-
-  function showTab(name) {
-    tab = name;
-    document.querySelectorAll(".tab").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === name)));
-    $("search-form").hidden = name === "favoritos";
-    $("q").value = "";
-    $("q").placeholder = name === "radios" ? "Nome da rádio, cidade ou gênero" : "Artista, música ou gênero";
-    if (name === "musicas") load(audiusTrending, "Em alta agora");
-    if (name === "radios") load(() => radioQuery({ countrycode: "BR" }), "Rádios mais ouvidas do Brasil");
-    if (name === "favoritos") {
-      $("list-title").textContent = "Seus favoritos";
-      results = favs.slice();
-      setStatus(results.length ? "" : "Toque no coração de uma música ou rádio para guardar aqui.");
-      render();
-    }
-  }
-
-  $("search-form").addEventListener("submit", (e) => {
-    e.preventDefault();
-    const q = $("q").value.trim();
-    if (!q) return showTab(tab);
-    $("q").blur();
-    if (tab === "musicas") load(() => audiusSearch(q), `Resultados para “${q}”`);
-    else load(async () => {
-      const [byName, byTag] = await Promise.all([radioQuery({ name: q }), radioQuery({ tag: q.toLowerCase(), limit: "30" }).catch(() => [])]);
-      const seen = new Set();
-      return [...byName, ...byTag].filter((s) => !seen.has(s.id) && seen.add(s.id));
-    }, `Rádios: “${q}”`);
-  });
-
-  document.querySelectorAll(".tab").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.tab)));
-
-  list.addEventListener("click", (e) => {
-    const favBtn = e.target.closest("[data-fav]");
-    if (favBtn) {
-      const it = results[+favBtn.dataset.fav];
-      favs = favs.some((f) => f.id === it.id) ? favs.filter((f) => f.id !== it.id) : [it, ...favs];
-      store.set("onda-favs", favs);
-      if (tab === "favoritos") results = favs.slice();
-      render();
-      return;
-    }
-    const row = e.target.closest("[data-i]");
-    if (row) { queue = results.slice(); playAt(+row.dataset.i); }
-  });
-
-  // Player
-  function setPlayIcon(playing) {
-    $("play-icon").innerHTML = playing ? icon.pause : icon.play;
-    $("play").setAttribute("aria-label", playing ? "Pausar" : "Tocar");
-  }
-
-  function playAt(i) {
-    if (i < 0 || i >= queue.length) return;
-    index = i;
-    const it = queue[i];
-    audio.src = it.src;
-    audio.play().catch(() => setStatus("Essa faixa não abriu. Pulando…", true));
-    $("now-title").textContent = it.title;
-    $("now-sub").textContent = it.sub;
-    $("now-cover").outerHTML = coverHTML(it).replace('class="cover"', 'class="cover" id="now-cover"');
-    $("bar").hidden = it.kind === "radio";
-    if ("mediaSession" in navigator) {
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title: it.title, artist: it.sub, album: it.kind === "radio" ? "Rádio ao vivo" : APP,
-        artwork: it.art ? [{ src: it.art, sizes: "480x480" }] : [],
-      });
-    }
-    render();
-  }
-
-  const next = () => { if (index < queue.length - 1) playAt(index + 1); };
-  const prev = () => { if (audio.currentTime > 5 && queue[index]?.kind === "track") audio.currentTime = 0; else if (index > 0) playAt(index - 1); };
-
-  $("play").addEventListener("click", () => {
-    if (index < 0) { if (results.length) { queue = results.slice(); playAt(0); } return; }
-    audio.paused ? audio.play().catch(() => {}) : audio.pause();
-  });
-  $("next").addEventListener("click", next);
-  $("prev").addEventListener("click", prev);
-
-  audio.addEventListener("play", () => { setPlayIcon(true); if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing"; });
-  audio.addEventListener("pause", () => { setPlayIcon(false); if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "paused"; });
-  audio.addEventListener("ended", next);
-  audio.addEventListener("playing", () => setStatus(""));
-  audio.addEventListener("error", () => {
-    if (index < 0) return;
-    setStatus(`“${queue[index]?.title}” não abriu. Pulando para a próxima.`, true);
-    setTimeout(next, 800);
-  });
-
-  const seek = $("seek");
-  let dragging = false;
-  audio.addEventListener("loadedmetadata", () => { seek.max = Math.floor(audio.duration || 0); $("dur").textContent = fmt(audio.duration); });
-  audio.addEventListener("timeupdate", () => {
-    if (!dragging) seek.value = Math.floor(audio.currentTime);
-    $("cur").textContent = fmt(audio.currentTime);
-    if ("mediaSession" in navigator && isFinite(audio.duration) && navigator.mediaSession.setPositionState) {
-      try { navigator.mediaSession.setPositionState({ duration: audio.duration, position: audio.currentTime, playbackRate: 1 }); } catch {}
-    }
-  });
-  seek.addEventListener("input", () => { dragging = true; $("cur").textContent = fmt(+seek.value); });
-  seek.addEventListener("change", () => { audio.currentTime = +seek.value; dragging = false; });
-
-  // Controles na tela de bloqueio / fone bluetooth
-  if ("mediaSession" in navigator) {
-    const ms = navigator.mediaSession;
-    const set = (a, h) => { try { ms.setActionHandler(a, h); } catch {} };
-    set("play", () => audio.play());
-    set("pause", () => audio.pause());
-    set("nexttrack", next);
-    set("previoustrack", prev);
-    set("seekto", (d) => { if (queue[index]?.kind === "track") audio.currentTime = d.seekTime; });
-    set("seekbackward", (d) => { audio.currentTime = Math.max(0, audio.currentTime - (d.seekOffset || 10)); });
-    set("seekforward", (d) => { audio.currentTime += d.seekOffset || 10; });
-  }
-
-  showTab("musicas");
-})();
-</script>
+<audio id="audio" preload="auto" playsinline></audio>
+<script src="app.js"></script>
 </body>
 </html>
