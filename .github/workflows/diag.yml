@@ -1,0 +1,22 @@
+name: diag
+on: push
+jobs:
+  t:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          O="Origin: https://abnermateus321-lang.github.io"
+          for u in \
+            "https://api.audius.co/v1/tracks/search?query=anitta&app_name=Onda" \
+            "https://api.audius.co/v1/tracks/trending?app_name=Onda&limit=2" \
+            "https://api.audius.co/v1/search/autocomplete?query=anitta&app_name=Onda" \
+            "https://itunes.apple.com/search?term=anitta&media=music&entity=song&limit=2&country=BR" \
+            "https://api.deezer.com/search?q=anitta&limit=2" \
+            "https://de1.api.radio-browser.info/json/stations/search?name=jovem&limit=1" \
+            "https://archive.org/advancedsearch.php?q=beatles&fl[]=identifier&rows=2&output=json" ; do
+            echo "=================== $u"
+            curl -sS -m 20 -D - -H "$O" "$u" -o body.txt | grep -iE "^HTTP|access-control|content-type|location" ; head -c 700 body.txt; echo
+          done
+          echo "==== stream redirect"
+          ID=$(curl -s "https://api.audius.co/v1/tracks/trending?app_name=Onda&limit=1" | python3 -c "import sys,json;print(json.load(sys.stdin)['data'][0]['id'])")
+          curl -sS -m 20 -D - -o /dev/null -H "$O" "https://api.audius.co/v1/tracks/$ID/stream?app_name=Onda" | grep -iE "^HTTP|location|access-control|content-type"
